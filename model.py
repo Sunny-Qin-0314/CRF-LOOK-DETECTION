@@ -4,7 +4,7 @@ import pickle
 
 from crfsuite_data import prepare_data
 
-with open(os.path.join("data/out", "train.pkl"), "rb") as f:
+with open(os.path.join("data/out", "new_train.pkl"), "rb") as f:
     train = pickle.load(f)
 
 trainer = pycrfsuite.Trainer(algorithm = 'pa',verbose=True)
@@ -22,4 +22,4 @@ for i, data in enumerate(train):
     for features, ylabel in temp:
         trainer.append(features, ylabel)
     trainer.train("exp_{}".format(i))
-    print("Model {} Trained".format(i))
+    print("Model {} Trained".format(i+5))

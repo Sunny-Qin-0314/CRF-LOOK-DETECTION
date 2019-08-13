@@ -1,7 +1,7 @@
 import os
 import pickle
 import pycrfsuite
-
+from constants import WITHOBJ
 from crfsuite_data import prepare_data
 from reporting import StatsManager, pretty_print_report, pretty_rl_table
 
@@ -16,22 +16,27 @@ with open(os.path.join("data/out", "validation.pkl"), "rb") as f:
 support_threshold = 100
 stats = StatsManager(support_threshold)
 
-# print(len(validation))
 for i, data in enumerate(validation):
     tagger = pycrfsuite.Tagger()
     tagger.open('exp_{}'.format(i))
-
+    # print(len(data))
     y_pred = []
+    y_num_pred =[]
     y_true = []
+    y_num_true = []
     for features, ylabel in prepare_data(data):
-        y_pred.append(tagger.tag(features))
-        y_true.append(ylabel)
 
+        y_pred.append(tagger.tag(features))
+        # y_num_pred.append(WITHOBJ[tagger.tag(features)])
+        y_true.append(ylabel)
+        # y_num_true.append(WITHOBJ[ylabel])
+    # if i == 4:
+    #     print(y_true[0][62:100], y_pred[0][62:100])
     stats.append_report(y_true, y_pred)
 
 
 # """
-# Do evaluation on test set 
+# Do evaluation on test set
 # """
 #
 # with open(os.path.join("data/out", "test.pkl"), "rb") as f:
@@ -94,8 +99,8 @@ def print_state_features(state_features):
     for (attr, label), weight in state_features:
         print("%0.6f %-6s %s" % (weight, label, attr))
 
-print("Top positive:")
-print_state_features(Counter(info.state_features).most_common(20))
-
-print("\nTop negative:")
-print_state_features(Counter(info.state_features).most_common()[-20:])
+# print("Top positive:")
+# print_state_features(Counter(info.state_features).most_common(20))
+#
+# print("\nTop negative:")
+# print_state_features(Counter(info.state_features).most_common()[-20:])

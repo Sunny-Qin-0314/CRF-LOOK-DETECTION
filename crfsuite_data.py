@@ -99,14 +99,12 @@ def prepare_data(data_dicts):
     features_list = []
     ylabel_list = []
     num_label = []
-    # print(data_dicts[13]["key_bbox"][340:350])
     for fdict in data_dicts:
         features, ylabel, y_num_label = get_crf_features(fdict)
         features_list.append(features)
         ylabel_list.append(ylabel)
         num_label.append(y_num_label)
 
-        # print(ylabel_list[0][200:300])
     data = zip(features_list, ylabel_list)
 
     return data

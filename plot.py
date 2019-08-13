@@ -1,4 +1,9 @@
-#
+"""
+Use this file to see one specific model performance, especially how the pred covers gt.
+It can also plot the feature(within_bbox) on the gt.
+Also, confusion matrix can be plotted
+
+"""
 # #
 # import pycrfsuite
 # import os
@@ -41,8 +46,9 @@
 # trainer.train("exp_{}".format(4))
 # print("Model {} Trained".format(4))
 #
-
-
+"""
+Prepare GT and Pred label sequence
+"""
 import os
 import pickle
 import pycrfsuite
@@ -59,12 +65,12 @@ data = test[0]
 tagger = pycrfsuite.Tagger()
 tagger.open('exp_{}'.format(5))
 
+
 y_pred = []
 y_true = []
 feature_total = []
 
 temp = prepare_data(data)
-# print(temp[13][340:350])
 for features, ylabel in temp:
 
           feature_total.append(features)  #900*n
@@ -73,16 +79,11 @@ for features, ylabel in temp:
 
           y_pred.append(tagger.tag(features))
 
-# print(len(feature_total)) # 19 train: 0->18, every chunk has 900 frames
-# print(feature_total[13][340:350])
 
-# print(y_pred[5][49:53])
-# print()
-# print(y_true[5][49:53])
-#
 
-# In[90]:
-
+"""
+Prepare within_bbox feature values
+"""
 
 import numpy as np
 f_num = []
@@ -108,16 +109,9 @@ for i, value in enumerate(feature_total): # feature total have 19 chunk of 900 f
             f_num.append(np.nan)
 
 
-
-# In[ ]:
-
-# print(f_num[12040:12050])
-# print(feature_total[13][340:350])
-# f_num
-
-
-# In[85]:
-
+"""
+Print out evaluation result
+"""
 
 import numpy as np
 
@@ -134,50 +128,68 @@ from constants import LABELS,INOUTLABELS,WITHOBJ
 
 lb = LabelBinarizer()
 y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
-# print(y_true_combined[200:250])
 y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
-# print(y_pred_combined[1])
 
 
 tagset = set(lb.classes_)
-# print(lb.classes_)
 tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
-# print(tagset)
 class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
-# print(class_indices)
 report = classification_report(y_true_combined,y_pred_combined,labels=[class_indices[cls] for cls in tagset],
                                target_names=tagset, output_dict=True)
-# report = classification_report(y_true_combined,y_pred_combined,output_dict=True)
+
+# Onset_evaluation:
+score = {"B-face":[],
+            "B-dice":[],
+            "B-key":[],
+            "B-map":[],
+            "B-ball":[],
+            "B-card":[]
+            }
+
+for tag in lb.classes_:
+    if tag.startswith("B-"):
+        score = 0
+        for i in range(len(y_true)):
+            index_pred= get_beginning_index(y_pred[i],tag)
+            index_gt = get_beginning_index(y_true[i],tag)
+            score = score + onset_evaluation(index_gt, index_pred , 0.001)
+            # if tag == "B-key":
+            #     print(index_gt,index_pred)
+            #     print(tag,score)
+
+        score[tag].append(score)
+    else:
+        score[tag].append(0)
+
 # print("Micro-average F1 score(same as overall accuracy): ", accuracy_score(y_true_combined, y_pred_combined))
-# hammingloss = hamming_loss(y_true_combined, y_pred_combined, labels=[class_indices[cls] for cls in tagset], sample_weight=None)
 
 
-# In[86]:
-
-
-def pretty_print_report(report):
-    table = PrettyTable(["", "Precision", "Recall", "F1-Score", "Support"])
+def pretty_print_report(report,score):
+    table = PrettyTable(["", "Precision", "Recall", "F1-Score", "Support","Onset_Delay_Per_Look"])
     for obj in report:
         if obj in WITHOBJ.keys():
             precision = report[obj]["precision"]
             recall = report[obj]["recall"]
             f1 = report[obj]["f1-score"]
             sup = report[obj]["support"]
-            table.add_row([obj, "{:03.2f} ".format(precision),
-                           "{:03.2f}".format(recall),
-                           "{:03.2f} ".format(f1),
-                           "{:03.2f} ".format(sup)])
+            onset = score[obj]
+            table.add_row([obj, "{:03.2f} ({:03.2f})".format(precision[0], precision[1]),
+                           "{:03.2f} ({:03.2f})".format(recall[0], recall[1]),
+                           "{:03.2f} ({:03.2f})".format(f1[0], f1[1]),
+                           "{:03.2f} ({:03.2f})".format(sup[0], sup[1]),
+                           "{:03.2f} ({:03.2f})".format(onset[0]/sup[0], onset[1]/sup[0])])
 
     print(table)
-#
-# pretty_print_report(report)
-# print(hammingloss)
+
+
+# pretty_print_report(report,score)
 
 
 
 
-# In[100]:
-
+"""
+Convert label sequence to number sequence
+"""
 
 from constants import INOUTLABELS,WITHOBJ
 import numpy as np
@@ -187,7 +199,6 @@ gt_final = []
 for i, value in enumerate (y_true):
     for key in value:
         if WITHOBJ[key] == 0:
-#             gt_final.append(np.nan)
             gt_final.append(0)
         else:
             gt_final.append(WITHOBJ[key])
@@ -197,26 +208,20 @@ pred_final = []
 for i, value in enumerate (y_pred):
     for key in value:
         if WITHOBJ[key] == 0:
-#             pred_final.append(np.nan)
             pred_final.append(0)
         else:
             pred_final.append(WITHOBJ[key])
 
 
-# In[ ]:
-
-# print(pred_final[0:300])
 
 
-# In[91]:
-# print(f_num[152:175])
-# print(pred_final[5400:6000])
+"""
+Plot pred on GT, or plot feature on GT
+"""
 
 import matplotlib.pyplot as plt
-# print(len(gt_final), len(f_num))
 plt.figure(figsize=[500,1])
 
-# print(f_num[12500:12510])
 # plt.plot(range(60,120),gt_final[60:120],'go',range(60,120),pred_final[60:120],'r^')
 # plt.plot(range(len(gt_final)),gt_final,'go',range(len(pred_final)),pred_final,'ro')
 # plt.plot(range(len(gt_final)),gt_final,'go',range(len(f_num)),f_num,'ro')
@@ -225,8 +230,12 @@ plt.plot(range(1000,2000),gt_final[1000:2000],'go',range(1000,2000),f_num[1000:2
 plt.ylabel('objects')
 plt.xlabel('frame #')
 plt.show()
-# plt.savefig('./gt_pred_OBJBIO1.jpg')
 
+
+
+"""
+Print useful details of the model
+"""
 
 from collections import Counter
 info = tagger.info()
@@ -251,8 +260,9 @@ def print_state_features(state_features):
 # print("\nTop negative:")
 # print_state_features(Counter(info.state_features).most_common()[-20:])
 
-#
-# #
+"""
+Plot confusion matrix
+"""
 # import numpy as np
 # import matplotlib.pyplot as plt
 #

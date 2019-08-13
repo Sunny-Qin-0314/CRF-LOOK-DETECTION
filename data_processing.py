@@ -19,7 +19,9 @@ def bbox_normalized_coords(bbox):
     h = bbox[3] / 720
     return x, y, w, h
 
-
+"""
+Get diagonal length of bbox
+"""
 def read_object_detections(filename):
     with open(os.path.join(OBJECT_DET_DIR, filename)) as f:
         object_data = f.readlines()
@@ -60,35 +62,17 @@ def read_object_detections(filename):
     return frame_list, bbox_list
 
 
-# def read_gaze_file(filename):
-#     gaze_data = pd.read_csv(os.path.join(GAZE_POS_DIR, filename))
-#     gaze_data = gaze_data[["timestamp", "index", "confidence", "norm_pos_x", "norm_pos_y"]]
-#     max_idx = int(gaze_data.iloc[-1]["index"] + 1)
-#     tpf = (gaze_data.iloc[-1]["timestamp"] - gaze_data.iloc[0]["timestamp"]) / max_idx
-#     gaze_list = []
-#     displacement_list = []
-#     velocity_list = []
-#     x_temp = 0
-#     y_temp = 0
-#     for i in range(max_idx):
-#         frame = gaze_data[gaze_data["index"] == i]
-#         filtered = frame[frame["confidence"] > 0.5]
-#         x = filtered["norm_pos_x"].mean()
-#         y = filtered["norm_pos_y"].mean()
-#         if math.isnan(x) or math.isnan(y):
-#             x, y = gaze_list[-1]
-#         gaze_list.append((x, y))
-
-#     return gaze_list, max_idx, tpf
 
 """
-not use tpf to calculate look frame number
-instead use start_sec(in annotation file) compared with world_timestamp(in gaze file) to get world_index/frame number(in gaze file)
+Not use tpf to calculate look frame number
+instead use start_sec(in annotation file) compared with world_timestamp(in gaze file) to get frame number(in gaze file)
 
+Main changes:
 in read_gaze_file, output "world_start_time" and "world_index list"
 in read_looks_gt_file, use the bisect algorithm to get the index of "world_index" list and then get the frame number
 in main, change the output and input for read_gaze_file and read_looks_gt_file functions
 
+Get displacement from the previous frame and current frame
 """
 def read_gaze_file(filename):
     gaze_data = pd.read_csv(os.path.join(GAZE_POS_DIR, filename))
@@ -162,58 +146,14 @@ def read_gaze_file(filename):
     return world_start_time,time_frame_data, gaze_list, max_idx, displacement_list,confidence_list
 
 
+"""
+Use relative distance to the bbox as the feature
+dist = norm_dist(gaze,center_bbox) / norm_dist(0.5* diagonal_bbox)
 
-# def get_frame_gaze_dict(gaze_list, frame_list, bbox_list, max_idx):
-#     out = {
-#         "card": [],
-#         "face": [],
-#         "dice": [],
-#         "key": [],
-#         "map": [],
-#         "ball": []
-#     }
-#     bbox_out = {"card_bbox": [],
-#                 "face_bbox": [],
-#                 "dice_bbox": [],
-#                 "key_bbox": [],
-#                 "map_bbox": [],
-#                 "ball_bbox": []}
+Add one more feature: displacement between the current frame and previous frame
 
-#     for i in range(max_idx):
-
-#         pupil = gaze_list[i]
-#         frame = frame_list[i]
-#         bbox_l = bbox_list[i]
-
-#         for key in out.keys():
-
-#             if key in frame:
-#                 dists = []
-
-#                 for pt in frame[key]:
-#                     dist = ((pupil[0] - pt[0]) ** 2 + (pupil[1] - pt[1]) ** 2) ** 0.5
-#                     if math.isnan(dist):
-#                         print(pupil, pt)
-#                     else:
-#                         dists.append(dist)
-
-#                 min_dist = min(dists)
-#                 out[key].append(min_dist)
-#             else:
-#                 out[key].append(1)
-
-#         for key in bbox_out.keys():
-#             is_in = False
-#             if key in bbox_l:
-#                 for bbox in bbox_l[key]:
-#                     if ((bbox[0] <= pupil[0] <= bbox[2]) and
-#                             (bbox[1] <= pupil[1] <= bbox[3])):
-#                         is_in = True
-#                         break
-#             bbox_out[key].append(is_in)
-#     out.update(bbox_out)
-#     out["index"] = np.arange(max_idx)
-#     return out
+Gaze_confidence feature does not have a good performance on the testset, so maybe not use it anymore
+"""
 
 def get_frame_gaze_dict(gaze_list, frame_list, bbox_list, max_idx, displacement_list, confidence_list):
 # def get_frame_gaze_dict(gaze_list, frame_list, bbox_list, max_idx):
@@ -296,31 +236,28 @@ def takeClosest(myList, myNumber):
     else:
        return pos
 
+"""
+Seperate B-obj tag and I-obj tag
+"""
 def read_looks_gt_file(filename, out, max_idx, time_frame_data, world_start_time):
     looks = pd.read_csv(os.path.join(GT_DIR, filename))[["object", "start_sec", "end_sec"]]
     looks = looks.sort_values("start_sec")
     out["look"] = np.array([0] * max_idx)
 
-    # print(filename)
     for row in looks.values:
         world_time_look_start = row[1] + world_start_time
         world_time_look_end = row[2] + world_start_time
-        # print(world_time_look_start,world_time_look_end)
         pos_start = takeClosest(time_frame_data["world_timestamp"],world_time_look_start)
         pos_end = takeClosest(time_frame_data["world_timestamp"],world_time_look_end)
 
         start =  int(time_frame_data.iloc[pos_start]["world_index"])
         end = int(time_frame_data.iloc[pos_end]["world_index"]+1)
-        # print(start,end)
 
         out["look"][start]= WITHOBJ["B-"+row[0]]
         out["look"][start+1:end] = WITHOBJ["I-"+row[0]]
         # out["look"][start:end] = LABELS[row[0]] # return object number
 
     out["look"] = list(out["look"])
-    # print(len(out["look"]))
-    # print(out["look"][9820:9900])
-    # print(out["key_bbox"][12040])
     return out
 
 
@@ -332,7 +269,6 @@ def create_chunks(final_dicts, chunk_size):
         print(i, num_chunks)
         for j in range(num_chunks):
             chunk = {}
-            # print(data.keys())
             for key in data.keys():
                 chunk[key] = data[key][j*chunk_size:(j+1)*chunk_size]
             chunks.append(chunk)
@@ -341,9 +277,7 @@ def create_chunks(final_dicts, chunk_size):
 
 def main():
 
-
-# Prepare training set and validation set
-
+# Prepare feature data
 
     obj_data = []
     bbox_data = []
@@ -374,16 +308,15 @@ def main():
     out_dicts = []
     for obj, bbx, gz, midx, ds, con in zip(obj_data, bbox_data, gaze_data, max_idxs, displacement_data,confidence_data):
         out_dicts.append(get_frame_gaze_dict(gz, obj, bbx, midx, ds, con))
-    # print(out_dicts[0]["key_bbox"][12040])
-    final_dicts = []
 
+
+    final_dicts = []
     for file, out, midx, world_start_time, time_frame_data in zip(GROUND_TRUTH, out_dicts, max_idxs, world_start_times, time_frame_datas):
-        # print(file)
         final_dicts.append(read_looks_gt_file(file, out, midx, time_frame_data, world_start_time))
 
     print(len(final_dicts))
 
-# Prepare test set
+# Prepare test data
 
     test_obj_data = []
     test_bbox_data = []
@@ -410,8 +343,6 @@ def main():
         test_confidence_data.append(con)
 
     test_out_dicts = []
-    # for obj, bbx, gz, midx in zip(obj_data, bbox_data, gaze_data, max_idxs):
-    # out_dicts.append(get_frame_gaze_dict(gz, obj, bbx, midx))
     for obj, bbx, gz, midx, ds, con in zip(test_obj_data, test_bbox_data, test_gaze_data, test_max_idxs, test_displacement_data, test_confidence_data):
         test_out_dicts.append(get_frame_gaze_dict(gz, obj, bbx, midx, ds, con))
 
@@ -421,24 +352,27 @@ def main():
 
 
 
+"""
+Generate those sets and save those sets into folder
+"""
+    # Video level cross validation (new_train, new_test) : every video to be the test set, others to be the train set
+
     new_train =[]
     new_test = []
-    # final_dicts_array = np.array(final_dicts)
-# Generate those sets and save those sets into folder
+
     for i in range(len(final_dicts)):
         new_test.append(np.array([final_dicts[i]]))
         new_train.append(np.array(final_dicts[0:i]+final_dicts[i+1:len(final_dicts)]))
-
 
 
     out_dir = os.path.join("data", "out")
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    # print(len(final_dicts))
+    # Chunk level cross validation (train, validation, test) several chunks to be the test set, other chunks to be the train set
 
     chunk_dicts = np.array(create_chunks(final_dicts, FILE_CHUNK))
-    # print(chunk_dicts[13]["key_bbox"][340:350])
+
     with open(os.path.join(out_dir, "data.pkl"), "wb") as f:
         pickle.dump(chunk_dicts, f)
 
@@ -448,13 +382,10 @@ def main():
 
 
     kf = KFold(n_splits=NUMBER_OF_CV_FOLDS)
-            # print(kf)
     for train_split, validation_split in kf.split(chunk_dicts):
         print(train_split, validation_split)
         train.append(chunk_dicts[train_split])
-
         validation.append(chunk_dicts[validation_split])
-                # print(chunk_dicts[[0,1,2,3]])
 
     test.append(test_final_dicts)
 

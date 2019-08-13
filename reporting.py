@@ -23,7 +23,6 @@ class StatsManager:
                     "B-ball":[],
                     "B-card":[]
                     }
-        self.hammingloss =[]
         self.support_threshold = supp_thres
 
     def transform(self, data):
@@ -39,8 +38,9 @@ class StatsManager:
 
         self.y_true.append(y_true)
         self.y_pred.append(y_pred)
-        # print(len(y_pred))
-        # print(len(self.y_pred[0]))
+
+        # Precision, recall, f1, support:
+
         lb = LabelBinarizer()
         y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
         y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
@@ -57,20 +57,14 @@ class StatsManager:
             output_dict=True
         )
 
-        # onset_evaluation:
-        # print(lb.classes_)
-        for tag in lb.classes_:
+        # Onset_evaluation:
 
+        for tag in lb.classes_:
             if tag.startswith("B-"):
                 score = 0
-                # if tag == "B-ball":
-                    # print(y_true[5][47:53], y_pred[5][47:53])
-
                 for i in range(len(y_true)):
-
                     index_pred= get_beginning_index(y_pred[i],tag)
                     index_gt = get_beginning_index(y_true[i],tag)
-
                     score = score + onset_evaluation(index_gt, index_pred , 0.001)
                     # if tag == "B-key":
                     #     print(index_gt,index_pred)
@@ -78,30 +72,28 @@ class StatsManager:
 
                 self.score[tag].append(score)
 
+        # Accuracy evaluation:
 
         print("Micro-average F1 score(same as overall accuracy): {:03.2f}".format(accuracy_score(y_true_combined, y_pred_combined)))
-        # print("average: ", accuracy_score(np.array(y_true), np.array(y_pred)))
+
         self.reports.append(report)
 
-    # def zero_one_loss_per_class(self,report,obj,y_num_true,y_num_pred):
-    #     loss = zero_one_loss(y_num_true, y_num_pred, normalize=False)
-    #     support = report[obj]["support"]
-    #     return loss/support
 
     def summarize(self):
+        """
+        I change the mean, std calculation here. The reason is written as the comment in line 105
+        """
         summary = defaultdict(lambda: defaultdict(list))
 
         for report in self.reports:
-            # print(report.keys())
             for key in report.keys():
-                # print(key)
                 for metric in report[key].keys():
-                    # if report[key]["support"] > self.support_threshold:
+                    if report[key]["support"] > self.support_threshold:
                         summary[key][metric].append(report[key][metric])
+
 
         report = defaultdict(dict)
         # temp2 = []
-        # print(summary.keys())
         for key in summary.keys():
             metrics = defaultdict()
             # temp2 = []
@@ -113,8 +105,6 @@ class StatsManager:
                 metrics[metric] = [np.mean(temp), np.std(temp)]
 
             if key.startswith("B-"):
-                # if key == "B-ball":
-                #     print(self.score[key])
                 metrics["Onset_Delay"] = [np.mean(self.score[key]), np.std(self.score[key])]
             else:
                 metrics["Onset_Delay"] = [0,0]
@@ -145,9 +135,8 @@ class StatsManager:
 
 
 def pretty_print_report(report):
-    table = PrettyTable(["", "Precision", "Recall", "F1-Score", "Support","Total_Onset_Delay"])
+    table = PrettyTable(["", "Precision", "Recall", "F1-Score", "Support","Onset_Delay_Per_Look"])
     for obj in report:
-        # print(obj)
         if obj in WITHOBJ.keys():
             precision = report[obj]["precision"]
             recall = report[obj]["recall"]
@@ -158,8 +147,7 @@ def pretty_print_report(report):
                            "{:03.2f} ({:03.2f})".format(recall[0], recall[1]),
                            "{:03.2f} ({:03.2f})".format(f1[0], f1[1]),
                            "{:03.2f} ({:03.2f})".format(sup[0], sup[1]),
-                           "{:03.2f} ({:03.2f})".format(onset[0], onset[1])])
-
+                           "{:03.2f} ({:03.2f})".format(onset[0]/sup[0], onset[1]/sup[0])])
 
     print(table)
 

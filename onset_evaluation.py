@@ -25,6 +25,14 @@ def take_closest(myList, myNumber):
     else:
        return before
 
+"""
+onset_evaluation = look_diff + w * onset_diff
+
+The inputs are the list of frame numbers that B-obj tag showing in the GT and Pred sequence
+[49,530] means that the 49th and 530th frames are the B-obj tag
+
+If the length are same, we do subtraction one by one, else we take the closest number in the list to subtract.
+"""
 def onset_evaluation(index_gt, index_pred, weight):
     onset = 0
     if len(index_gt) == len(index_pred):

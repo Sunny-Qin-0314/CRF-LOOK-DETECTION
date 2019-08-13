@@ -8,24 +8,13 @@ GAZE_POS_DIR = os.path.join(ROOT, "gaze")
 GT_DIR = os.path.join(ROOT, "annotations")
 
 
-#6_19_002 6_26_000 6_26_001 have offset problem
 
-
-# OBJECT_DETECTIONS = ["2019_06_13_000.csv"]
-#
-# GAZE_POSITIONS = ["2019_06_13_000_gaze_positions.csv"]
-# GROUND_TRUTH = ["2019_06_13_000_annotated.csv"]
-
-
-
-# ,"2019_07_12_001.csv","2019_07_12_002.csv"
 OBJECT_DETECTIONS = ["2019_07_24_002.csv","2019_07_12_001.csv","2019_07_12_002.csv","2019_07_19.csv","2019_07_24_000.csv","2019_07_24_001.csv","2019_07_24_003.csv"]
 
 GAZE_POSITIONS = ["2019_07_24_002_gaze_positions_filtered.csv","2019_07_12_001_gaze_positions_filtered.csv","2019_07_12_002_gaze_positions_filtered.csv","2019_07_19_gaze_positions_filtered.csv","2019_07_24_000_gaze_positions_filtered.csv","2019_07_24_001_gaze_positions_filtered.csv","2019_07_24_003_gaze_positions_filtered.csv"]
-# ,"2019_07_12_001_gaze_positions.csv","2019_07_12_002_gaze_positions.csv"
 
 GROUND_TRUTH = ["2019_07_24_002_annotated.csv","2019_07_12_001_annotated.csv","2019_07_12_002_annotated.csv","2019_07_19_annotated.csv","2019_07_24_000_annotated.csv","2019_07_24_001_annotated.csv","2019_07_24_003_annotated.csv"]
-# ,"2019_07_12_001_annotated.csv","2019_07_12_002_annotated.csv"
+
 
 TEST_OBJECT_DETECTIONS = ["2019_06_13_000.csv"]
 TEST_GAZE_POSITIONS = ["2019_06_13_000_gaze_positions.csv"]
@@ -58,7 +47,7 @@ LABELS = {"card": 0,
           "none": 0,
           "uncertain": 0}
 
-REV_INOUTLABELS = {      # This doesn't look good, maybe because the labels are not enough
+REV_INOUTLABELS = {      # This doesn't look good, maybe because the labels are not enough, we don't use it anymore
                 0 : "O",
                 1 : "B",
                 2 : "I"
@@ -101,7 +90,7 @@ WITHOBJ = {
             "I-ball":10,
             "B-card":0,
             "I-card":0,
-            "B-uncertain":0,
+            "B-uncertain":0,  # we don't use uncertain tag anymore
             "I-uncertain":0,
             "O":0
 }

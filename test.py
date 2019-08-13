@@ -6,37 +6,34 @@ from crfsuite_data import prepare_data
 from reporting import StatsManager, pretty_print_report, pretty_rl_table
 
 """
-Do evaluation on validation set
+Do evaluation on new test set, video level cross validation
 
 """
 
-with open(os.path.join("data/out", "validation.pkl"), "rb") as f:
+with open(os.path.join("data/out", "new_test.pkl"), "rb") as f:
     validation = pickle.load(f)
 
-support_threshold = 100
+support_threshold = 0
 stats = StatsManager(support_threshold)
 
 for i, data in enumerate(validation):
     tagger = pycrfsuite.Tagger()
-    tagger.open('exp_{}'.format(i))
+    tagger.open('exp_{}'.format(i+5))
     # print(len(data))
     y_pred = []
     y_num_pred =[]
     y_true = []
     y_num_true = []
     for features, ylabel in prepare_data(data):
-
         y_pred.append(tagger.tag(features))
-        # y_num_pred.append(WITHOBJ[tagger.tag(features)])
         y_true.append(ylabel)
-        # y_num_true.append(WITHOBJ[ylabel])
     # if i == 4:
     #     print(y_true[0][62:100], y_pred[0][62:100])
     stats.append_report(y_true, y_pred)
 
 
 # """
-# Do evaluation on test set
+# Do evaluation on a seperate test set, after do evaluation on chunk level cross validation
 # """
 #
 # with open(os.path.join("data/out", "test.pkl"), "rb") as f:
@@ -82,6 +79,11 @@ pretty_print_report(report)
 # rl_report = stats.runlength_report()
 # pretty_rl_table(rl_report)
 
+
+"""
+To see the details of the model, such as the top likely transitions and top features
+
+"""
 from collections import Counter
 info = tagger.info()
 

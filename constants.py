@@ -9,16 +9,16 @@ GT_DIR = os.path.join(ROOT, "annotations")
 
 
 
-OBJECT_DETECTIONS = ["2019_07_24_002.csv","2019_07_12_001.csv","2019_07_12_002.csv","2019_07_19.csv","2019_07_24_000.csv","2019_07_24_001.csv","2019_07_24_003.csv"]
+OBJECT_DETECTIONS = ["2019_07_12_001.csv","2019_07_12_002.csv","2019_07_19.csv","2019_07_24_000.csv","2019_07_24_001.csv","2019_07_24_003.csv"]
 
-GAZE_POSITIONS = ["2019_07_24_002_gaze_positions_filtered.csv","2019_07_12_001_gaze_positions_filtered.csv","2019_07_12_002_gaze_positions_filtered.csv","2019_07_19_gaze_positions_filtered.csv","2019_07_24_000_gaze_positions_filtered.csv","2019_07_24_001_gaze_positions_filtered.csv","2019_07_24_003_gaze_positions_filtered.csv"]
+GAZE_POSITIONS = ["2019_07_12_001_gaze_positions_filtered.csv","2019_07_12_002_gaze_positions_filtered.csv","2019_07_19_gaze_positions_filtered.csv","2019_07_24_000_gaze_positions_filtered.csv","2019_07_24_001_gaze_positions_filtered.csv","2019_07_24_003_gaze_positions_filtered.csv"]
 
-GROUND_TRUTH = ["2019_07_24_002_annotated.csv","2019_07_12_001_annotated.csv","2019_07_12_002_annotated.csv","2019_07_19_annotated.csv","2019_07_24_000_annotated.csv","2019_07_24_001_annotated.csv","2019_07_24_003_annotated.csv"]
+GROUND_TRUTH = ["2019_07_12_001_annotated.csv","2019_07_12_002_annotated.csv","2019_07_19_annotated.csv","2019_07_24_000_annotated.csv","2019_07_24_001_annotated.csv","2019_07_24_003_annotated.csv"]
 
 
-TEST_OBJECT_DETECTIONS = ["2019_06_13_000.csv"]
-TEST_GAZE_POSITIONS = ["2019_06_13_000_gaze_positions.csv"]
-TEST_GROUND_TRUTH = ["2019_06_13_000_annotated.csv"]
+TEST_OBJECT_DETECTIONS = ["2019_07_24_002.csv"]
+TEST_GAZE_POSITIONS = ["2019_07_24_002_gaze_positions_filtered.csv"]
+TEST_GROUND_TRUTH = ["2019_07_24_002_annotated.csv"]
 
 
 FILE_CHUNK = 600

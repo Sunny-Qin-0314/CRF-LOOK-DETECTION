@@ -260,6 +260,32 @@ def read_looks_gt_file(filename, out, max_idx, time_frame_data, world_start_time
     out["look"] = list(out["look"])
     return out
 
+"""
+This new method requires a new file input, world_timestamp.npy. But I think this one is less accurate than the previous one, because the previous one provides a higher frame rate.
+"""
+def new_read_looks_gt_file(filename, out, max_idx, time_frame_filename):
+    looks = pd.read_csv(os.path.join(GT_DIR, filename))[["object", "start_sec", "end_sec"]]
+    looks = looks.sort_values("start_sec")
+    time_frame = np.load(os.path.join(GT_DIR, time_frame_filename))
+    world_start_time = time_frame["world_timestamp"][0]
+    # print(time_frame["world_timestamp"][0])
+    out["look"] = np.array([0] * max_idx)
+
+    for row in looks.values:
+        world_time_look_start = row[1] + world_start_time
+        world_time_look_end = row[2] + world_start_time
+        start = takeClosest(time_frame["world_timestamp"],world_time_look_start)
+        end = takeClosest(time_frame["world_timestamp"],world_time_look_end)
+
+        # start =  int(time_frame_data.iloc[pos_start]["world_index"])
+        # end = int(time_frame_data.iloc[pos_end]["world_index"]+1)
+
+        out["look"][start]= WITHOBJ["B-"+row[0]]
+        out["look"][start+1:end] = WITHOBJ["I-"+row[0]]
+        # out["look"][start:end] = LABELS[row[0]] # return object number
+
+    out["look"] = list(out["look"])
+    return out
 
 def create_chunks(final_dicts, chunk_size):
     chunks = []
@@ -352,10 +378,11 @@ def main():
 
 
 
-"""
-Generate those sets and save those sets into folder
-"""
-    # Video level cross validation (new_train, new_test) : every video to be the test set, others to be the train set
+# """
+# Generate those sets and save those sets into folder
+#
+# """
+# Video level cross validation (new_train, new_test) : every video to be the test set, others to be the train set
 
     new_train =[]
     new_test = []

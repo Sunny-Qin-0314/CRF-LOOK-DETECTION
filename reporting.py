@@ -65,7 +65,7 @@ class StatsManager:
                 for i in range(len(y_true)):
                     index_pred= get_beginning_index(y_pred[i],tag)
                     index_gt = get_beginning_index(y_true[i],tag)
-                    score = score + onset_evaluation(index_gt, index_pred , 0.001)
+                    score = score + onset_evaluation(index_gt, index_pred , 1)
                     # if tag == "B-key":
                     #     print(index_gt,index_pred)
                     #     print(tag,score)

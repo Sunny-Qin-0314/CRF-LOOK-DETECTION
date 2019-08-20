@@ -5,6 +5,17 @@ from constants import WITHOBJ
 from crfsuite_data import prepare_data
 from reporting import StatsManager, pretty_print_report, pretty_rl_table
 
+
+def post_processing(pred):
+    for i in range(len(pred)):
+        current = pred[i]
+        if i > 0:
+            prev = pred[i-1]
+            if prev =="O" and current.startswith("I-"):
+                pred[i] = current.replace("I-","B-")
+    return pred
+
+
 """
 Do evaluation on new test set, video level cross validation
 
@@ -18,24 +29,43 @@ stats = StatsManager(support_threshold)
 
 for i, data in enumerate(validation):
     tagger = pycrfsuite.Tagger()
-    tagger.open('exp_{}'.format(i+5))
+    tagger.open('exp_{}'.format(i))
     # print(len(data))
     y_pred = []
     y_num_pred =[]
     y_true = []
     y_num_true = []
     for features, ylabel in prepare_data(data):
-        y_pred.append(tagger.tag(features))
+        pred = post_processing(tagger.tag(features))
+        y_pred.append(pred)
         y_true.append(ylabel)
+
     # if i == 4:
     #     print(y_true[0][62:100], y_pred[0][62:100])
     stats.append_report(y_true, y_pred)
 
+# data = validation[4]
+#
+# tagger = pycrfsuite.Tagger()
+# tagger.open('exp_{}'.format(4))
+# y_pred = []
+# y_num_pred =[]
+# y_true = []
+# y_num_true = []
+# for features, ylabel in prepare_data(data):
+#     pred = post_processing(tagger.tag(features))
+#     y_pred.append(pred)
+#     y_true.append(ylabel)
+#
+# # if i == 4:
+# #     print(y_true[0][62:100], y_pred[0][62:100])
+# stats.append_report(y_true, y_pred)
+#
 
 # """
 # Do evaluation on a seperate test set, after do evaluation on chunk level cross validation
 # """
-#
+
 # with open(os.path.join("data/out", "test.pkl"), "rb") as f:
 #     test = pickle.load(f)
 #
@@ -44,9 +74,9 @@ for i, data in enumerate(validation):
 #
 # print(len(test))
 # for j, data in enumerate(test):
-#     for i in range(5):
+#     for i in range(6):
 #         tagger = pycrfsuite.Tagger()
-#         tagger.open('exp_{}'.format(i))
+#         tagger.open('exp_{}'.format(i+5))
 #
 #         test_y_pred = []
 #         test_y_true = []
@@ -62,7 +92,7 @@ for i, data in enumerate(validation):
 #
 #                   test_y_pred.append(tagger.tag(features))
 #         test_stats.append_report(test_y_true, test_y_pred)
-
+# #
 
 
 
@@ -74,7 +104,7 @@ pretty_print_report(report)
 # print("Multi-class Classification Testing Report Mean(Std)")
 # report, summary = test_stats.summarize()
 # pretty_print_report(report)
-#
+
 # print("Run-length Report")
 # rl_report = stats.runlength_report()
 # pretty_rl_table(rl_report)

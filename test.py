@@ -39,9 +39,6 @@ for i, data in enumerate(validation):
         pred = post_processing(tagger.tag(features))
         y_pred.append(pred)
         y_true.append(ylabel)
-
-    # if i == 4:
-    #     print(y_true[0][62:100], y_pred[0][62:100])
     stats.append_report(y_true, y_pred)
 
 # data = validation[4]

@@ -10,6 +10,32 @@ from prettytable import PrettyTable
 from constants import LABELS,WITHOBJ
 from onset_evaluation import *
 
+def convertB_to_I(sequence):
+    new = []
+    for i in range(len(sequence)):
+        if sequence[i].startswith("B-"):
+            new.append(sequence[i].replace("B-","I-"))
+        else:
+            new.append(sequence[i])
+    return new
+
+def accuracy(y_true, y_pred):
+    TN = 0
+    TP = 0
+    total = 0
+    for i in range(len(y_true)):
+        new_y_true = convertB_to_I(y_true[i])
+        new_y_pred = convertB_to_I(y_pred[i])
+        total = total + len(new_y_true)
+        for j in range(len(new_y_true)):
+            if new_y_true[j] == new_y_pred[j] and new_y_true[j]=="O":
+                TN = TN + 1
+            elif new_y_true[j] == new_y_pred[j] :
+                TP = TP +1
+    print("TN:{}, TP:{}, total(include TN):{}".format(TN,TP,total))
+    accuracy = TP / (total - TN)
+    return accuracy
+
 class StatsManager:
 
     def __init__(self, supp_thres=0):
@@ -35,7 +61,6 @@ class StatsManager:
         return t_data
 
     def append_report(self, y_true, y_pred):
-
         self.y_true.append(y_true)
         self.y_pred.append(y_pred)
 
@@ -73,7 +98,8 @@ class StatsManager:
                 self.score[tag].append(score)
 
         # Accuracy evaluation:
-
+        new_accuracy_measure = accuracy(y_true, y_pred)
+        print("New_accuracy: {:03.2f}".format(new_accuracy_measure))
         print("Micro-average F1 score(same as overall accuracy): {:03.2f}".format(accuracy_score(y_true_combined, y_pred_combined)))
 
         self.reports.append(report)

@@ -9,7 +9,7 @@ from bisect import bisect_left
 
 def take_closest(myList, myNumber):
     """
-    Assumes myList is sorted. Returns closest value to myNumber.
+    # Assumes myList is sorted. Returns closest value to myNumber.
 
     If two numbers are equally close, return the smallest number.
     """
